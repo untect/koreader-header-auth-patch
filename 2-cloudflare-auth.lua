@@ -1,8 +1,18 @@
 -- 2-cloudflare-auth.lua
 -- Cloudflare Access Service Token Authentication Patch
--- Injects CF-Access-Client-Id and CF-Access-Client-Secret headers into all HTTP/HTTPS requests
+-- Injects CF-Access-Client-Id and CF-Access-Client-Secret headers into HTTPS requests where the target URL contains a specified domain 
 
 local logger = require("logger")
+
+-- TOGGLE HTTP
+-- By default, injecting headers into HTTP traffic is disabled to avoid sharing plaintext credentials
+-- If for compatibility reasons you need this, it can be enabled by setting INJECT_HTTP to true
+local INJECT_HTTP = false
+
+-- TARGET DOMAIN
+-- This value will be used to filter where we inject the headers to reduce the risk of your credentials being sent to a bad actor
+-- It can be your full domain, a unique subdomain, or some other arbitrary string which will be present in all requests to your server
+local TARGET_DOMAIN = "<your-sub.domain.com>"
 
 -- CREDENTIALS
 local CF_ID = "<your-client-id-here>"
@@ -36,13 +46,16 @@ local function inject_cf_headers(request)
         if not request.headers then
             request.headers = {}
         end
-        -- Inject Cloudflare headers (only if not already present)
-        if not request.headers["CF-Access-Client-Id"] then
-            request.headers["CF-Access-Client-Id"] = CF_ID
-            request.headers["CF-Access-Client-Secret"] = CF_SECRET
-            logger.info("CF-Auth: ✓ Injected headers for URL:", request.url or "unknown")
-        else
-            logger.info("CF-Auth: Headers already present for:", request.url or "unknown")
+        -- Check if the request is eligible for injection 
+        if string.find(request.url, TARGET_DOMAIN) and (string.find(request.url, "https://", 1, true) or INJECT_HTTP) then
+            -- Inject Cloudflare headers (only if not already present)
+            if not request.headers["CF-Access-Client-Id"] then
+                request.headers["CF-Access-Client-Id"] = CF_ID
+                request.headers["CF-Access-Client-Secret"] = CF_SECRET
+                logger.info("CF-Auth: ✓ Injected headers for URL:", request.url or "unknown")
+            else
+                logger.info("CF-Auth: Headers already present for:", request.url or "unknown")
+            end
         end
     end
     return request
