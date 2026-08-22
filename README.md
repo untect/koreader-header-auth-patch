@@ -2,21 +2,23 @@
 
 A lightweight Lua patch for [KOReader](https://github.com/koreader/koreader) that enables authentication against **Pangolin** and **Cloudflare Zero Trust** using headers.
 
-This patch allows you to access OPDS catalogs (like [Calibre-Web Automated](https://github.com/crocodilestick/Calibre-Web-Automated) or [Kavita](https://github.com/Kareadita/Kavita)) as well as other KOReader compatible apps (like [BookOrbit](https://github.com/bookorbit/bookorbit)) that are protected behind Pangolin or Cloudflare without needing a browser login, VPN client, or complex proxy setups on your e-reader.
+This patch allows you to access OPDS catalogs (like [Calibre-Web Automated](https://github.com/crocodilestick/Calibre-Web-Automated) or [Kavita](https://github.com/Kareadita/Kavita)) as well as other KOReader compatible apps (like [BookOrbit](https://github.com/bookorbit/bookorbit)) that are protected behind Pangolin or Cloudflare without needing a browser login, VPN client, or complex proxy setups on your e-reader. This is preferable to bypasses for particular paths as all traffic remains subject to authentication.
 
 Credit to [crocodilestick](https://github.com/crocodilestick) and [vicegold](https://github.com/vicegold) for the original [Cloudflare](https://github.com/crocodilestick/koreader-cloudflare-auth-patch)/[Pangolin](https://github.com/vicegold/koreader-pangolin-auth-patch) implementations.
 
-## 🚀 How It Works
+## How It Works
 KOReader natively supports HTTP/HTTPS but does not support the interactive login flows required by services like Cloudflare or Pangolin.
 
-This script uses **"Monkey Patching"** to hook into the core Lua network libraries (`socket.http` and `ssl.https`) inside KOReader. It intercepts every network request made by the device and automatically injects the required headers before the request leaves the device.
+This script uses **"Monkey Patching"** to hook into the core Lua network libraries (`socket.http` and `ssl.https`) inside KOReader. It intercepts every network request made by the device, checks whether the target URL matches the domain you specify, and automatically injects the required headers before the request leaves the device. 
 
-## 🛠️ Prerequisites
-1.  A device running **KOReader** (Kindle, Kobo, Android, etc.).
+By default, the patch will only inject headers into HTTPS traffic to avoid your Pangolin/Cloudflare credentials being passed in plaintext over HTTP, however this can be disabled if your setup requires it.
+
+## Prerequisites
+1.  A device running **KOReader** (Kindle, Kobo, Android,  etc.).
 2.  A **Pangolin** instance or **Cloudflare Zero Trust** account protecting your OPDS/BookOrbit server.
 
-## ⚙️ Setup
-Before installing the patch, you must generate the credentials with either Pangolin or Cloudflare. These act as the machine-to-machine username/password for your device
+## Setup
+Before installing the patch, you must generate the credentials with either Pangolin or Cloudflare. These act as the machine-to-machine username/password for your device.
 
 ### Pangolin
 
@@ -45,10 +47,10 @@ Before installing the patch, you must generate the credentials with either Pango
     * **Rule:** Select `Service Token` and choose the token you just created.
 
 
-## 📥 Installation
+## Installation
 
 1.  Download either the `2-pangolin-auth.lua` _**or**_ the `2-cloudflare-auth.lua` file from this repository.
-2.  Open the file in a text editor (Notepad++, VS Code, etc.).
+2.  Open the file in a text editor (Notepad++, VS Code, vim, nano, Emacs...).
 3.  Replace the placeholder credentials with your tokens.
     * For Pangolin:
     ```lua
@@ -65,16 +67,17 @@ Before installing the patch, you must generate the credentials with either Pango
     local TARGET_DOMAIN = "<your-sub.domain.com>"
     ```
 5.  Connect your KOReader device to your computer via USB.
-6.  Navigate to the KOReader directory (`/koreader/patches/`) on the device.
+6.  Navigate to the KOReader directory (usually `/koreader/patches/`) on the device.
     * *(Note: If the `patches` folder does not exist, create it).*
 7.  Copy your modified `2-pangolin-auth.lua` _**or**_ the `2-cloudflare-auth.lua` into that folder.
-8.  **Restart KOReader** (Exit and re-open, or full reboot).
+8.  Eject/disconnect your KOReader device.
+9.  **Restart KOReader** (Exit and re-open, or full reboot of the device).
 
 ## 🔍 Verification & Troubleshooting
 This patch integrates with KOReader's internal logging system. If you are having issues:
 
 1.  Open the `crash.log` file in your KOReader directory.
-2.  Search for `Pangolin-Auth` or `CF-Auth`.
+2.  Search for `Pangolin-Auth` or `CF-Auth` depending on which version of the patch you have installed.
 3.  You should see success messages like:
     ```text
     Pangolin-Auth: Initializing...
@@ -82,18 +85,15 @@ This patch integrates with KOReader's internal logging system. If you are having
     Pangolin-Auth: ✓ Injected headers for URL: [https://your-opds-url.com/opds](https://your-opds-url.com/opds)
     ```
 
-### Common Issues
-* **"Unable to Connect":** Check your ID and Token/Secret for typos. Ensure you have correctly configured Cloudflare access policy includes the token.
+### Potential Issues
+* **"Unable to Connect":** Check your ID and Token/Secret for typos. Ensure you have correctly configured Cloudflare access policy includes the token or check the Shareable Link is still active in Pangolin.
 * **Boot Loop:** If KOReader crashes on boot, delete the file from the `patches` folder via USB.
 * **HTTP Traffic:** The patch currently only injects into HTTPS traffic as that is the default behaviour of both Pangolin and Cloudflare. If your resource is configured for access over HTTP, you will need to enable HTTP injection here:
     ```lua
     local INJECT_HTTP = true
     ```
 
-## ⚠️ Security Considerations
-Your **Access Token** is stored in plain text on the device.
-* If you lose your device, anyone with USB access could potentially copy the token.
-* **Mitigation:** If your device is lost or stolen, simply revoke the Access Token in the Pangolin/Cloudflare Dashboard. This will immediately cut off access without needing to change your server passwords.
-
-## 📄 License
-MIT License. Feel free to use, modify, and distribute.
+## Security Considerations
+Your Pangolin/Cloudflare credentials are stored in plaintext on the device.
+* If you lose your device anyone could potentially copy the token over USB.
+* Best practice on losing your device is to revoke the Access Token in the Pangolin/Cloudflare Dashboard as soon as possible.
