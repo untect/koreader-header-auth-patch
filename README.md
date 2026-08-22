@@ -73,7 +73,7 @@ Before installing the patch, you must generate the credentials with either Pango
 8.  Eject/disconnect your KOReader device.
 9.  **Restart KOReader** (Exit and re-open, or full reboot of the device).
 
-## 🔍 Verification & Troubleshooting
+## Troubleshooting
 This patch integrates with KOReader's internal logging system. If you are having issues:
 
 1.  Open the `crash.log` file in your KOReader directory.
