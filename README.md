@@ -4,7 +4,7 @@ A lightweight Lua patch for [KOReader](https://github.com/koreader/koreader) tha
 
 This patch allows you to access OPDS catalogs (like [Calibre-Web Automated](https://github.com/crocodilestick/Calibre-Web-Automated) or [Kavita](https://github.com/Kareadita/Kavita)) as well as other KOReader compatible apps (like [BookOrbit](https://github.com/bookorbit/bookorbit)) that are protected behind Pangolin or Cloudflare without needing a browser login, VPN client, or complex proxy setups on your e-reader.
 
-Credit to [crocodilestick](https://github.com/crocodilestick) and [vicegold](https://github.com/vicegold) for the original Cloudflare/Pangolin implementations.
+Credit to [crocodilestick](https://github.com/crocodilestick) and [vicegold](https://github.com/vicegold) for the original [Cloudflare](https://github.com/crocodilestick/koreader-cloudflare-auth-patch)/[Pangolin](https://github.com/vicegold/koreader-pangolin-auth-patch) implementations.
 
 ## 🚀 How It Works
 KOReader natively supports HTTP/HTTPS but does not support the interactive login flows required by services like Cloudflare or Pangolin.
