@@ -1,8 +1,18 @@
 -- 2-pangolin-auth.lua
 -- Pangolin Custom Header Authentication Patch
--- Injects P-Access-Token-Id and P-Access-Token headers into all HTTP/HTTPS requests
+-- Injects P-Access-Token-Id and P-Access-Token headers into HTTPS requests where the target URL contains a specified domain 
 
 local logger = require("logger")
+
+-- TOGGLE HTTP
+-- By default, injecting headers into HTTP traffic is disabled to avoid sharing plaintext credentials
+-- If for compatibility reasons you need this, it can be enabled by setting INJECT_HTTP to true
+local INJECT_HTTP = false
+
+-- TARGET DOMAIN
+-- This value will be used to filter where we inject the headers to reduce the risk of your credentials being sent to a bad actor
+-- It can be your full domain, a unique subdomain, or some other arbitrary string which will be present in all requests to your server
+local TARGET_DOMAIN = "<your-sub.domain.com>"
 
 -- CREDENTIALS
 local P_TOKEN_ID = "<your-token-id-here>"
@@ -14,6 +24,7 @@ logger.info("Pangolin-Auth: Initializing...")
 -- Get the actual module tables from package.loaded
 local http_module = package.loaded["socket.http"]
 local https_module = package.loaded["ssl.https"]
+
 
 if not http_module then
     logger.warn("Pangolin-Auth: socket.http not loaded yet, loading now...")
@@ -36,13 +47,16 @@ local function inject_pangolin_headers(request)
         if not request.headers then
             request.headers = {}
         end
-        -- Inject Pangolin headers (only if not already present)
-        if not request.headers["P-Access-Token-Id"] then
-            request.headers["P-Access-Token-Id"] = P_TOKEN_ID
-            request.headers["P-Access-Token"] = P_TOKEN
-            logger.info("Pangolin-Auth: ✓ Injected headers for URL:", request.url or "unknown")
-        else
-            logger.info("Pangolin-Auth: Headers already present for:", request.url or "unknown")
+        -- Check if the request is eligible for injection 
+        if string.find(request.url, TARGET_DOMAIN) and (string.find(request.url, "https://", 1, true) or INJECT_HTTP) then
+            -- Inject Pangolin headers (only if not already present)
+            if not request.headers["P-Access-Token-Id"] then
+                request.headers["P-Access-Token-Id"] = P_TOKEN_ID
+                request.headers["P-Access-Token"] = P_TOKEN
+                logger.info("Pangolin-Auth: ✓ Injected headers for URL:", request.url or "unknown")
+            else
+                logger.info("Pangolin-Auth: Headers already present for:", request.url or "unknown")
+            end
         end
     end
     return request
@@ -71,6 +85,7 @@ http_module.request = function(req, body)
 
     return result1, result2, result3, result4
 end
+
 
 https_module.request = function(req, body)
     logger.info("Pangolin-Auth: >>> https.request intercepted, type=" .. type(req))
