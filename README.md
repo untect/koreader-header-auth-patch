@@ -2,7 +2,7 @@
 
 A lightweight Lua patch for [KOReader](https://github.com/koreader/koreader) that enables authentication against **Pangolin** using headers.
 
-This patch allows you to access OPDS catalogs (like Calibre-Web Automated, Audiobookshelf, or Kavita) that are protected behind Pangolin without needing a browser login, VPN client, or complex proxy setups on your e-reader.
+This patch allows you to access OPDS catalogs (like Calibre-Web Automated, Audiobookshelf, or Kavita) or other KOReader compatible apps (like BookOrbit) that are protected behind Pangolin without needing a browser login, VPN client, or complex proxy setups on your e-reader.
 
 ## 🚀 How It Works
 KOReader natively supports HTTP/HTTPS but does not support the interactive login flows required by Pangolin.
@@ -29,17 +29,21 @@ Before installing the patch, you must generate a share link with 2 header key va
 2.  Open the file in a text editor (Notepad++, VS Code, etc.).
 3.  Replace the placeholder credentials with your tokens from Pangolin:
     ```lua
-    local P_TOKEN_ID = "put-your-token-id-here"
-    local P_TOKEN = "put-your-token-here"
+    local P_TOKEN_ID = "<your-token-id-here>"
+    local P_TOKEN = "<your-token-here>"
     ```
-4.  Connect your KOReader device to your computer via USB.
-5.  Navigate to the KOReader directory on the device:
+4.  Replace the placeholder URL with the domain name you have protected with Pangolin
+    ```lua
+    local TARGET_DOMAIN = "<your-sub.domain.com>"
+    ```
+5.  Connect your KOReader device to your computer via USB.
+6.  Navigate to the KOReader directory on the device:
     * **Kindle:** `.adds/koreader/patches/`
     * **Kobo:** `.adds/koreader/patches/`
     * **Android:** `/koreader/patches/`
     * *(Note: If the `patches` folder does not exist, create it).*
-6.  Copy your modified `2-pangolin-auth.lua` into that folder.
-7.  **Restart KOReader** (Exit and re-open, or full reboot).
+7.  Copy your modified `2-pangolin-auth.lua` into that folder.
+8.  **Restart KOReader** (Exit and re-open, or full reboot).
 
 ## 🔍 Verification & Troubleshooting
 This patch integrates with KOReader's internal logging system. If you are having issues:
@@ -56,6 +60,10 @@ This patch integrates with KOReader's internal logging system. If you are having
 ### Common Issues
 * **"Unable to Connect":** Check your `P_TOKEN_ID` and `P_TOKEN` for typos. Ensure your Pangolin access policy includes the token.
 * **Boot Loop:** If KOReader crashes on boot, delete the file from the `patches` folder via USB.
+* **HTTP Traffic:** The patch currently only injects into HTTPS traffic as that is the default behaviour of Pangolin. If your resource is configured for access over HTTP, you will need to enable HTTP injection here:
+    ```lua
+    local INJECT_HTTP = true
+    ```
 
 ## ⚠️ Security Warning
 Your **Access Token** is stored in plain text on the device.
